@@ -1,0 +1,151 @@
+<html>
+
+<head>
+  <script type="application/javascript" src="neuralNetwork.js"></script>
+  <script type="application/javascript">
+    window.onload = function () {
+      var canvas = document.getElementById('mainCanvas');
+      var context = canvas.getContext("2d");
+      
+
+
+      function createArray(length) {
+        var arr = new Array(length || 0)
+          , i = length;
+
+        if (arguments.length > 1) {
+          var args = Array.prototype.slice.call(arguments, 1);
+          while (i--) arr[length - 1 - i] = createArray.apply(this, args);
+        }
+
+        return arr;
+      }
+    
+      function generateInputs(imageDataArray) {
+        return imageDataArray.filter((_, index) => index % 4 === 0);
+      }
+
+      function randomPolygon(sides, cx, cy, width, height, perfectR, minR, maxR) {
+        
+        var varience = 0;
+        
+        context.beginPath();
+        for(var i=0;i<sides+1;i++){
+          var r = (Math.random()*(maxR-minR))+minR;
+          
+          varience += Math.abs(r-perfectR);
+          
+          var x = (Math.cos(Math.PI*2/sides*i)*r)+cx;
+          var y = (Math.sin(Math.PI*2/sides*i)*r)+cy;
+          if(i==0){
+            context.moveTo(x, y);
+          }else{
+            context.lineTo(x, y);
+          }
+        }
+        
+        return varience;
+      }
+
+      var populous = [];
+
+      for (var i = 0; i < 20; i++) {
+        populous.push({fitness:0, network:new NeuralNetwork(canvas.width * canvas.height, 1, 2, 16)});
+      }
+
+      var poly = 3;
+
+      for (var generation = 0; generation < 5; generation++) {
+        //Test networks
+        for (var tests = 0; tests < 50; tests++) {
+          
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          var varience = (sigmoid(randomPolygon(poly, canvas.width/2, canvas.height/2, canvas.width, canvas.height, 15, tests==0?15:10, tests==0?15:20))-.5)*2;
+          context.fillStyle = "#000000";
+          context.fill();
+          
+          var inputs = generateInputs(context.getImageData(0, 0, canvas.width, canvas.height).data);
+          for(var p=0; p<populous.length; p++){
+            outputs = populous[p].network.evaluate(inputs);
+            populous[p].fitness = Math.abs(outputs[0] - varience)
+          }
+          
+        }
+        
+        var chromosomes = [];
+        
+        populous.sort(function(a, b) {
+          return a.fitness - b.fitness;
+        });
+        
+        for(var p=0; p<populous.length; p++){
+          var chromosome = [];
+          
+          for(var i=0;i<populous[p].network.hiddenLayerCount+1;i++){
+            for(var j=0;j<populous[p].network.layers[i].neuronCount;j++){
+              for(var k=0;k<populous[p].network.layers[i].neurons[j].inputCount+1;k++){
+                chromosome.push(populous[p].network.layers[i].neurons[j].weights[k]);
+              }
+            }
+          }
+          
+          
+          chromosomes.push(chromosome);
+        }
+        
+        var nextPop = [];
+        for(var p=0; p<populous.length; p++){
+          nextPop.push({fitness:0, network:new NeuralNetwork(populous[0].inputCount, populous[0].outputCount, populous[0].hiddenLayerCount, populous[0].neuronsPerHiddenLayer)});
+        }
+        
+        var newChromosomes = [];
+        
+        newChromosomes.push(chromosomes[0]);
+        newChromosomes.push(chromosomes[1]);
+        
+        var mother = chromosomes[0];
+        var father = chromosomes[1];
+        
+        for(var i=2;i<chromosomes.length;i++){
+          var cut = Math.random(chromosomes[i].length);
+          c = mother.slice(0, cut).concat(father.slice(cut, chromosomes[i].length));
+          for(var j=0;j<c.length;j++){
+            if(Math.random() < .1){
+              c[j] = Math.random();
+            }
+          }
+          newChromosomes.push(c);
+          
+        }
+        
+        for(var p=0; p<nextPop.length; p++){
+          var c = 0;
+          for(var i=0;i<nextPop[p].network.hiddenLayerCount+1;i++){
+            for(var j=0;j<nextPop[p].network.layers[i].neuronCount;j++){
+              for(var k=0;k<nextPop[p].network.layers[i].neurons[j].inputCount+1;k++){
+                nextPop[p].network.layers[i].neurons[j].weights[k] = newChromosomes[p][c];
+                c++;
+              }
+            }
+          }
+          
+        }
+        
+        populous = nextPop;
+          
+        
+        console.log(populous);
+        
+      }
+    }
+    
+  </script>
+</head>
+
+<body>
+  <canvas id="mainCanvas" width="64" height="64"></canvas>
+
+
+</body>
+
+</html>
