@@ -1,0 +1,49 @@
+<html>
+
+<head>
+  <script type="application/javascript" src="neuralNetwork.js"></script>
+  <script type="application/javascript">
+    window.onload = function () {
+      'use strict';
+      
+      var table = document.getElementById("mainTable");
+      
+      var teaching = [
+        {in:[0, 0], out:[0]},
+        {in:[0, 1], out:[1]},
+        {in:[1, 0], out:[1]},
+        {in:[1, 1], out:[1]},
+      ];
+      
+      var nn = new Network([2, 2, 1]);
+
+      var learningRate = 0.2;
+      var epochs = 1000;
+      var i, set;
+      
+      for (i = 0; i < epochs; i++){
+        for(set = 0; set < teaching.length; set++){
+          nn.evaluate(teaching[set].in);
+          nn.learn(teaching[set].out, learningRate);
+        }
+      }
+      
+      for(set = 0; set < teaching.length; set++){
+        console.log(teaching[set].in, teaching[set].out, nn.evaluate(teaching[set].in));
+      }
+           
+           
+    }
+    
+  </script>
+</head>
+
+<body>
+  
+  <table id="mainTable">
+  
+  </table>
+
+</body>
+
+</html>
