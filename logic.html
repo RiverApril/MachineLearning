@@ -35,7 +35,6 @@
       learningRate = 0.2;
       epochs = 0;
 
-      diff = 1;
       diffs = [];
 
 
@@ -43,33 +42,36 @@
         context.fillStyle = "#FFFFFF";
         context.fillRect(0, 0, context.canvas.width, context.canvas.height);
         
+        context.strokeStyle = "#000000";
         context.strokeText("Epoch: "+epochs, 0, fontH);
-        context.strokeText("Mean Error: "+(diff * 100.0).toFixed(5)+"%", 0, fontH*2);
         
-        diff = 0;
         for(var set = 0; set < teaching.length; set++){
           nn.calculate(teaching[set].in);
           nn.learn(teaching[set].out, learningRate);
           for (var o = 0; o < teaching[set].out.length; o++) {
-            diff = Math.max(Math.abs(nn.neurons[nn.neurons.length - 1][o].data.output-teaching[set].out[o]), diff);
+            var diff = Math.abs(nn.neurons[nn.neurons.length - 1][o].data.output-teaching[set].out[o]);
+            diffs.push(diff);
           }
-          diffs.push(diff);
           drawNetwork(set);
         }
         epochs++;
         
+        var graphY = (fontH * 3);
+        var graphH = 100;
+        var graphW = 100;
+        
         context.strokeStyle = "#FFC0C0";
         context.beginPath();
-        context.moveTo(0, (fontH * 3));
-        context.lineTo(100, (fontH * 3));
-        context.moveTo(0, (fontH * 3)+300);
-        context.lineTo(100, (fontH * 3)+300);
+        context.moveTo(0, graphY);
+        context.lineTo(graphW, graphY);
+        context.moveTo(0, graphY+graphH);
+        context.lineTo(graphW, graphY+graphH);
         context.stroke();
         
-        context.strokeStyle = "#000000";
+        context.strokeStyle = "#C0C0C0";
         context.beginPath();
-        for (var i = 0; i < 100; i++) {
-          var y = ((1 - diffs[diffs.length - i]) * 300.0) + (fontH * 3);
+        for (var i = 0; i < graphW; i++) {
+          var y = ((1 - diffs[diffs.length - i]) * graphH) + graphY;
           if (i == 0) {
             context.moveTo(i, y);
           } else {
