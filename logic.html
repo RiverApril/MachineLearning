@@ -2,7 +2,7 @@
 
 <head>
   <script type="application/javascript" src="neuralNetwork.js"></script>
-  <script type="application/javascript" src="renderer.js"></script>
+  <script type="application/javascript" src="networkVisualizer.js"></script>
   <script type="application/javascript">
     
     var canvas, context;
@@ -10,6 +10,7 @@
     var teaching;
     var topology;
     var nn;
+    var networkVis;
     
     var learningRate;
     var epochs;
@@ -30,7 +31,14 @@
       
       nn = new Network(topology, teaching.length);
       
-      initalizeRenderer("mainCanvas", nn);
+  
+      canvas = document.getElementById("mainCanvas");
+      context = canvas.getContext("2d");
+
+      context.canvas.width = window.innerWidth;
+      context.canvas.height = window.innerHeight;
+      
+      networkVis = new NetworkVisualizer(context, nn, 100, 0, context.canvas.width-100, context.canvas.height);
 
       learningRate = 0.2;
       epochs = 0;
@@ -43,20 +51,23 @@
         context.fillRect(0, 0, context.canvas.width, context.canvas.height);
         
         context.strokeStyle = "#000000";
-        context.strokeText("Epoch: "+epochs, 0, fontH);
+        context.strokeText("Epoch: "+epochs, 0, networkVis.fontH);
+        
+        var outputs = [];
         
         for(var set = 0; set < teaching.length; set++){
-          nn.calculate(teaching[set].in);
+          outputs.push(nn.calculate(teaching[set].in));
           nn.learn(teaching[set].out, learningRate);
+          var diff = 0;
           for (var o = 0; o < teaching[set].out.length; o++) {
-            var diff = Math.abs(nn.neurons[nn.neurons.length - 1][o].data.output-teaching[set].out[o]);
-            diffs[set].push(diff);
+            diff = Math.max(diff, Math.abs(nn.neurons[nn.neurons.length - 1][o].data.output-teaching[set].out[o]));
           }
-          drawNetwork(set);
+          diffs[set].push(diff);
         }
+        networkVis.draw();
         epochs++;
         
-        var graphY = (fontH * 3);
+        var graphY = (networkVis.fontH * 3);
         var graphH = 100;
         var graphW = 100;
         
@@ -68,11 +79,11 @@
         context.lineTo(graphW, graphY+graphH);
         context.stroke();
         
-        context.strokeStyle = "#C0C0C0";
         for(var set = 0; set < teaching.length; set++){
+          context.strokeStyle = "#C0C0C0";
           context.beginPath();
           for (var i = 0; i < graphW; i++) {
-            var y = ((1 - diffs[set][diffs[set].length - i]) * graphH) + graphY;
+            var y = ((1 - diffs[set][Math.ceil(diffs[set].length / graphW * i)]) * graphH) + graphY;
             if (i == 0) {
               context.moveTo(i, y);
             } else {
@@ -80,6 +91,12 @@
             }
           }
           context.stroke();
+          context.strokeStyle = "#000000";
+          for (var i = 0; i < outputs[set].length; i++) {
+            outputs[set][i] = Number(outputs[set][i].toFixed(4));
+          }
+          var str = JSON.stringify(teaching[set].in) + " -> " + JSON.stringify(teaching[set].out) + " ~ " + JSON.stringify(outputs[set]);
+          context.strokeText(str, 0, graphY + graphH + (16*(set+2)));
         }
       
       }
