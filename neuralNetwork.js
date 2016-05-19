@@ -7,8 +7,14 @@ function assert(b){
   }
 }
 
-var Network = function (topology) {
+var Network = function (topology, trialQty) {
   "use strict";
+  
+  this.trialQty = trialQty;
+  
+  this.randomWeight = function () {
+    return (Math.random()*2.0-1.0) * (1.0 / Math.sqrt(this.trialQty));
+  }
   
   this.neurons = [];
   for(var x = 0; x < topology.length; x++){
@@ -69,9 +75,9 @@ var Neuron = function (network, x, y) {
   if (this.x > 0) { //is not an input neuron
     this.weights = [];
     for (var i = 0; i < this.network.neurons[this.x-1].length; i++){
-      this.weights.push(Math.random()-.5);
+      this.weights.push(this.network.randomWeight());
     }
-    this.bias = Math.random()-.5;
+    this.bias = this.network.randomWeight();
   }
   
   

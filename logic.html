@@ -28,14 +28,14 @@
       
       topology = [2, 2, 1];
       
-      nn = new Network(topology);
+      nn = new Network(topology, teaching.length);
       
       initalizeRenderer("mainCanvas", nn);
 
       learningRate = 0.2;
       epochs = 0;
 
-      diffs = [];
+      diffs = [[], [], [], []];
 
 
       var update = function(){
@@ -50,7 +50,7 @@
           nn.learn(teaching[set].out, learningRate);
           for (var o = 0; o < teaching[set].out.length; o++) {
             var diff = Math.abs(nn.neurons[nn.neurons.length - 1][o].data.output-teaching[set].out[o]);
-            diffs.push(diff);
+            diffs[set].push(diff);
           }
           drawNetwork(set);
         }
@@ -69,16 +69,18 @@
         context.stroke();
         
         context.strokeStyle = "#C0C0C0";
-        context.beginPath();
-        for (var i = 0; i < graphW; i++) {
-          var y = ((1 - diffs[diffs.length - i]) * graphH) + graphY;
-          if (i == 0) {
-            context.moveTo(i, y);
-          } else {
-            context.lineTo(i, y);
+        for(var set = 0; set < teaching.length; set++){
+          context.beginPath();
+          for (var i = 0; i < graphW; i++) {
+            var y = ((1 - diffs[set][diffs[set].length - i]) * graphH) + graphY;
+            if (i == 0) {
+              context.moveTo(i, y);
+            } else {
+              context.lineTo(i, y);
+            }
           }
+          context.stroke();
         }
-        context.stroke();
       
       }
       
