@@ -69,9 +69,9 @@ var Neuron = function (network, x, y) {
   if (this.x > 0) { //is not an input neuron
     this.weights = [];
     for (var i = 0; i < this.network.neurons[this.x-1].length; i++){
-      this.weights.push(Math.random());
+      this.weights.push(Math.random()-.5);
     }
-    this.bias = Math.random();
+    this.bias = Math.random()-.5;
   }
   
   

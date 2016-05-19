@@ -14,6 +14,7 @@
     var learningRate;
     var epochs;
     var diff;
+    var diffs;
     
     window.onload = function () {
       'use strict';
@@ -35,6 +36,7 @@
       epochs = 0;
 
       diff = 1;
+      diffs = [];
 
 
       var update = function(){
@@ -42,7 +44,7 @@
         context.fillRect(0, 0, context.canvas.width, context.canvas.height);
         
         context.strokeText("Epoch: "+epochs, 0, fontH);
-        context.strokeText("Mean Diff: "+diff, 0, fontH*2);
+        context.strokeText("Mean Error: "+(diff * 100.0).toFixed(5)+"%", 0, fontH*2);
         
         diff = 0;
         for(var set = 0; set < teaching.length; set++){
@@ -51,9 +53,30 @@
           for (var o = 0; o < teaching[set].out.length; o++) {
             diff = Math.max(Math.abs(nn.neurons[nn.neurons.length - 1][o].data.output-teaching[set].out[o]), diff);
           }
+          diffs.push(diff);
           drawNetwork(set);
         }
         epochs++;
+        
+        context.strokeStyle = "#FFC0C0";
+        context.beginPath();
+        context.moveTo(0, (fontH * 3));
+        context.lineTo(100, (fontH * 3));
+        context.moveTo(0, (fontH * 3)+300);
+        context.lineTo(100, (fontH * 3)+300);
+        context.stroke();
+        
+        context.strokeStyle = "#000000";
+        context.beginPath();
+        for (var i = 0; i < 100; i++) {
+          var y = ((1 - diffs[diffs.length - i]) * 300.0) + (fontH * 3);
+          if (i == 0) {
+            context.moveTo(i, y);
+          } else {
+            context.lineTo(i, y);
+          }
+        }
+        context.stroke();
       
       }
       
