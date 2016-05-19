@@ -77,7 +77,7 @@ var Neuron = function (network, x, y) {
   
   this.calculate = function (inputs) {
     if (this.x > 0){ //is not an input neuron
-      assert(this.network.neurons[0].length === this.weights.length);
+      assert(this.network.neurons[this.x-1].length === this.weights.length);
       var sum = 0;
       for (var i = 0; i < inputs.length; i++) {
         sum += inputs[i] * this.weights[i];
