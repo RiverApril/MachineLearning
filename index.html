@@ -5,46 +5,61 @@
   <script type="application/javascript" src="networkVisualizer.js"></script>
   <script type="application/javascript">
     
-    var canvas, context;
     
-    var teaching;
-    var topology;
-    var nn;
-    var networkVis;
-    
-    var learningRate;
-    var epochs;
-    var diff;
-    var diffs;
     
     window.onload = function () {
       'use strict';
+      
+      var intervalID;
 
-      teaching = [
-        {in:[0, 0], out:[0]},
-        {in:[0, 1], out:[1]},
-        {in:[1, 0], out:[1]},
-        {in:[1, 1], out:[0]},
+      var teaching = [
+        {in:[0, 0, 0], out:[0, 0]},
+        {in:[0, 1, 0], out:[0, 1]},
+        {in:[1, 0, 0], out:[0, 1]},
+        {in:[1, 1, 0], out:[1, 0]},
+        {in:[0, 0, 1], out:[0, 1]},
+        {in:[0, 1, 1], out:[1, 0]},
+        {in:[1, 0, 1], out:[1, 0]},
+        {in:[1, 1, 1], out:[0, 0]},
       ];
       
-      topology = [2, 2, 1];
+      var hiddenTopology = [4, 4];
       
-      nn = new Network(topology, teaching.length);
+      var learningRate = 0.5;
+      
+      var topology = [teaching[0].in.length].concat(hiddenTopology).concat([teaching[0].out.length]);
+      
+      run(teaching, topology, learningRate);
+      
+    }
+      
+      
+    var run = function(teaching, topology, learningRate){
+      'use strict';
+      
+      var nn = new Network(topology, teaching.length);
       
   
-      canvas = document.getElementById("mainCanvas");
-      context = canvas.getContext("2d");
+      var canvas = document.getElementById("mainCanvas");
+      var context = canvas.getContext("2d");
 
       context.canvas.width = window.innerWidth;
       context.canvas.height = window.innerHeight;
+        
+      var graphX = 0;
+      var graphY = 0;
+      var graphH = 100;
+      var graphW = context.canvas.width;
       
-      networkVis = new NetworkVisualizer(context, nn, 100, 0, context.canvas.width-100, context.canvas.height);
+      var networkVis = new NetworkVisualizer(context, nn, 100, graphH, context.canvas.width-100, context.canvas.height-graphH);
 
-      learningRate = 0.2;
-      epochs = 0;
+      var epochs = 0;
 
-      diffs = [[], [], [], []];
+      var diffs = [];
 
+      for(var set = 0; set < teaching.length; set++){
+        diffs.push([]);
+      }
 
       var update = function(){
         context.fillStyle = "#FFFFFF";
@@ -67,27 +82,23 @@
         networkVis.draw();
         epochs++;
         
-        var graphY = (networkVis.fontH * 3);
-        var graphH = 100;
-        var graphW = 100;
-        
         context.strokeStyle = "#FFC0C0";
         context.beginPath();
-        context.moveTo(0, graphY);
-        context.lineTo(graphW, graphY);
-        context.moveTo(0, graphY+graphH);
-        context.lineTo(graphW, graphY+graphH);
+        context.moveTo(graphX, graphY);
+        context.lineTo(graphX+graphW, graphY);
+        context.moveTo(graphX, graphY+graphH);
+        context.lineTo(graphX+graphW, graphY+graphH);
         context.stroke();
         
         for(var set = 0; set < teaching.length; set++){
-          context.strokeStyle = "#C0C0C0";
+          context.strokeStyle = "#808080";
           context.beginPath();
           for (var i = 0; i < graphW; i++) {
             var y = ((1 - diffs[set][Math.ceil(diffs[set].length / graphW * i)]) * graphH) + graphY;
             if (i == 0) {
-              context.moveTo(i, y);
+              context.moveTo(graphX+i, y);
             } else {
-              context.lineTo(i, y);
+              context.lineTo(graphX+i, y);
             }
           }
           context.stroke();
@@ -101,9 +112,13 @@
       
       }
       
-      window.setInterval(update, 1);
+      intervalID = window.setInterval(update, 1);
       
            
+    }
+    
+    var stop = function () {
+      window.clearInterval(intervalID);
     }
     
   </script>

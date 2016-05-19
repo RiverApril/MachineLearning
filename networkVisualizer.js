@@ -27,8 +27,9 @@ var NetworkVisualizer = function(context, nn, dx, dy, dw, dh){
             x:(this.positions[x-1][k].x - this.positions[x][y].x),
             y:(this.positions[x-1][k].y - this.positions[x][y].y),
           };
-          s.x = (s.x/4)+this.positions[x][y].x;
-          s.y = (s.y/4)+this.positions[x][y].y;
+          var len = Math.sqrt(s.x*s.x + s.y*s.y);
+          s.x = (s.x/len*(this.fontH*(nn.neurons[x][y].weights.length+1)))+this.positions[x][y].x;
+          s.y = (s.y/len*(this.fontH*(nn.neurons[x][y].weights.length+1)))+this.positions[x][y].y;
           this.positions[x][y].w.push(s);
         }
       }
