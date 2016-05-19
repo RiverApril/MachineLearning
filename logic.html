@@ -26,7 +26,9 @@
         for(set = 0; set < teaching.length; set++){
           nn.calculate(teaching[set].in);
           nn.learn(teaching[set].out, learningRate);
-          diff = Math.max(Math.abs(nn.neurons[nn.neurons.length - 1][0].data.output-teaching[set].out[0]), diff);
+          for (var o = 0; o < teaching[set].out.length; o++) {
+            diff = Math.max(Math.abs(nn.neurons[nn.neurons.length - 1][o].data.output-teaching[set].out[o]), diff);
+          }
         }
         epochs++;
       }
