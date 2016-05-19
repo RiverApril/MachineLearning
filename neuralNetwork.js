@@ -1,185 +1,117 @@
-function dot(a, b) {
-  'use strict';
+
+function assert(b){
+  "use strict";
   
-  if (a.length !== b.length) {
-    console.error("Dot product inputs not equal!");
-    return undefined;
+  if(b !== true){
+    console.error("Error");
   }
-  var sum = 0;
-  for (var i = 0; i < a.length; i++) {
-    sum += a[i] * b[i];
-  }
-  return sum;
 }
 
-
-var InputNeuron = function () {
-  'use strict';
+var Network = function (topology) {
+  "use strict";
   
-  this.lastInput = undefined;
-  this.lastOutput = undefined;
-  
-  this.outputNeurons = undefined;
-  
-  this.setup = function (input) {
-    this.lastInput = input;
-  }
-  
-  this.evaluate = function () {
-    this.lastOutput = this.lastInput;
-  }
-  
-};
-
-var Neuron = function () {
-  'use strict';
-  
-  this.lastInputs = undefined;
-  this.lastOutput = undefined;
-  this.weights = undefined;
-  this.bias = undefined;
-  
-  this.lastError = undefined;
-  
-  this.inputNeurons = undefined;
-  
-  this.outputNeurons = undefined;
-  this.targetOutput = undefined;
-  
-  this.evaluate = function () {
-    this.lastInputs = [];
-    for (var i = 0; i < this.inputNeurons.length; i++) {
-      this.lastInputs.push(this.inputNeurons[i].lastOutput);
+  this.neurons = [];
+  for(var x = 0; x < topology.length; x++){
+    this.neurons.push([]);
+    for(var y = 0; y < topology[x]; y++){
+      this.neurons[x].push(new Neuron(this, x, y));
     }
-    this.lastOutput = this.activation(dot(this.lastInputs, this.weights) + this.bias);
   }
-    
-  this.calcError = function () {
-    if(this.outputNeurons != undefined){
-      var s = 0;
-      var i, j;
-      var w = -1;
-      for (i = 0; i < this.outputNeurons.length; i += 1) {
-        for(j = 0; j < this.outputNeurons[i].inputNeurons.length; j += 1){
-          if(this.outputNeurons[i].inputNeurons[j] === this){
-            w = i;
-            break;
-          }
-        }
-        if(w != -1){
-          break;
+  
+  this.calculate = function (inputs) {
+    for (var x = 0; x < this.neurons.length; x++) {
+      var outputs = [];
+      for (var y = 0; y < this.neurons[x].length; y++) {
+        outputs.push(this.neurons[x][y].calculate(inputs));
+      }
+      inputs = outputs;
+    }
+    return inputs;
+  }
+  
+  this.learn = function (targetOutput, learningRate) {
+    for (var x = this.neurons.length - 1; x >= 0; x--) {
+      for (var y = 0; y < this.neurons[x].length; y++) {
+        if(x === this.neurons.length - 1){
+          this.neurons[x][y].calculateError(targetOutput[y]);
+        }else{
+          this.neurons[x][y].calculateError();
         }
       }
-      for (i = 0; i < this.outputNeurons.length; i += 1) {
-        s += this.outputNeurons[i].lastError * this.outputNeurons[i].weights[w];
+    }
+    for (var x = 0; x < this.neurons.length; x++) {
+      for (var y = 0; y < this.neurons[x].length; y++) {
+        this.neurons[x][y].updateWeights(learningRate);
       }
-      this.lastError = this.activationDeriv(this.lastOutput) * s;
-    } else if (this.targetOutput != undefined){
-      this.lastError = this.activationDeriv(this.lastOutput) * (this.targetOutput - this.lastOutput);
-    } else { 
-      console.log("Both outputNeurons and targetOutput are undefined!");
     }
-  }
-  
-  this.updateWeights = function (learningRate) {
-    var i;
-    for (i = 0; i < this.weights.length; i += 1) {
-      this.weights[i] += learningRate * this.lastInputs[i] * this.lastError;
-    }
-    this.bias += learningRate * this.activation(this.bias) * this.lastError;
   }
   
   this.activation = function (x) {
-    return 1.0 / (1.0 + Math.exp(-x));
+    return 1.0 / (1.0 + Math.exp(-x))
   }
   
   this.activationDeriv = function (x) {
-    return this.activation(x) * (1.0 - this.activation(x))
+    return this.activation(x) * (1.0 - this.activation(x));
   }
-};
+  
+}
 
-var Network = function (topology) {
-  'use strict';
+var Neuron = function (network, x, y) {
+  "use strict";
   
-  this.layers = [];
+  this.network = network;
+  this.x = x;
+  this.y = y;
   
-  var i, j, k;
+  this.data = {};
   
-  //Input Layer
-  this.layers.push([]);
-  for (i = 0; i < topology[0]; i += 1) {
-    this.layers[0].push(new InputNeuron());
-  }
   
-  //Hidden Layers
-  for (i = 1; i < topology.length - 1; i += 1) {
-    this.layers.push([]);
-    for (j = 0; j < topology[i]; j += 1) {
-      this.layers[i].push(new Neuron());
+  if (this.x > 0) { //is not an input neuron
+    this.weights = [];
+    for (var i = 0; i < this.network.neurons[this.x-1].length; i++){
+      this.weights.push(Math.random());
     }
+    this.bias = Math.random();
   }
   
-  //Output Layer
-  this.layers.push([]);
-  for (i = 0; i < topology[topology.length - 1]; i += 1) {
-    this.layers[topology.length - 1].push(new Neuron());
-  }
   
-  //set in neurons
-  for (i = 1; i < this.layers.length; i += 1) {
-    for (j = 0; j < this.layers[i].length; j += 1) {
-      this.layers[i][j].inputNeurons = this.layers[i - 1];
-    }
-  }
-  
-  //set out neurons
-  for (i = 0; i < this.layers.length - 1; i += 1) {
-    for (j = 0; j < this.layers[i].length; j += 1) {
-      this.layers[i][j].outputNeurons = this.layers[i + 1];
-    }
-  }
-  
-  for (i = 1; i < this.layers.length; i += 1) {
-    for (j = 0; j < this.layers[i].length; j += 1) {
-      this.layers[i][j].weights = [];
-      for (k = 0; k < this.layers[i][j].inputNeurons.length; k += 1) {
-        this.layers[i][j].weights.push(Math.random());
+  this.calculate = function (inputs) {
+    if (this.x > 0){ //is not an input neuron
+      assert(this.network.neurons[0].length === this.weights.length);
+      var sum = 0;
+      for (var i = 0; i < inputs.length; i++) {
+        sum += inputs[i] * this.weights[i];
       }
-      this.layers[i][j].bias = Math.random();
+      sum += this.bias;
+      this.data.net = sum;
+      this.data.output = this.network.activation(this.data.net);
+    } else {
+      this.data.net = inputs[this.y];
+      this.data.output = this.data.net;
     }
+    return this.data.output;
   }
   
-  this.evaluate = function (inputs) {
-    var i, j;
-    for (i = 0; i < this.layers[0].length; i += 1) {
-      this.layers[0][i].setup(inputs[i]);
-    }
-    for (i = 0; i < this.layers.length; i += 1) {
-      for (j = 0; j < this.layers[i].length; j += 1) {
-        this.layers[i][j].evaluate();
+  this.calculateError = function (target) {
+    if(this.x === network.neurons.length - 1){
+      this.data.error = this.network.activationDeriv(this.data.net) * (target  - this.data.output);
+    } else if (this.x > 0){
+      assert(target === undefined)
+      var sum = 0;
+      for (var y = 0; y < this.network.neurons[this.x+1].length; y++) {
+        sum += (this.network.neurons[this.x+1][y].data.error * this.network.neurons[this.x+1][y].weights[this.y])
       }
+      this.data.error = this.network.activationDeriv(this.data.net) * sum;
     }
-    var outputs = [];
-    for (j = 0; j < this.layers[this.layers.length - 1].length; j += 1) {
-      outputs.push(this.layers[this.layers.length - 1][j].lastOutput);
-    }
-    return outputs;
+    return this.data.error;
   }
   
-  this.learn = function (targets, learningRate) {
-    var i, j;
-    for (j = 0; j < targets.length; j += 1) {
-      this.layers[this.layers.length - 1][j].targetOutput = targets[j];
-    }
-    for (i = this.layers.length - 1; i > 0; i -= 1) {
-      for (j = 0; j < this.layers[i].length; j += 1) {
-        this.layers[i][j].calcError();
+  this.updateWeights = function (learningRate) {
+    if(this.x > 0){
+      for (var y = 0; y < this.weights.length; y++) {
+        this.weights[y] += learningRate * this.network.neurons[this.x - 1][y].data.output * this.data.error;
       }
-    }
-    for (i = this.layers.length - 1; i > 0; i -= 1) {
-      for (j = 0; j < this.layers[i].length; j += 1) {
-        this.layers[i][j].updateWeights(learningRate);
-      }
+      this.bias += learningRate * this.network.activation(this.bias) * this.data.error;
     }
   }
   

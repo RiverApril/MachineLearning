@@ -6,32 +6,37 @@
     window.onload = function () {
       'use strict';
       
-      var table = document.getElementById("mainTable");
-      
       var teaching = [
         {in:[0, 0], out:[0]},
         {in:[0, 1], out:[1]},
         {in:[1, 0], out:[1]},
-        {in:[1, 1], out:[1]},
+        {in:[1, 1], out:[0]},
       ];
       
       var nn = new Network([2, 2, 1]);
 
       var learningRate = 0.2;
-      var epochs = 1000;
+      var epochs = 0;
       var i, set;
       
-      for (i = 0; i < epochs; i++){
+      var diff = 1;
+      
+      while (diff > 0.1) {
+        diff = 0;
         for(set = 0; set < teaching.length; set++){
-          nn.evaluate(teaching[set].in);
+          nn.calculate(teaching[set].in);
           nn.learn(teaching[set].out, learningRate);
+          diff = Math.max(Math.abs(nn.neurons[nn.neurons.length - 1][0].data.output-teaching[set].out[0]), diff);
         }
+        epochs++;
       }
       
+      console.log("Epochs: ", epochs);
+      
       for(set = 0; set < teaching.length; set++){
-        console.log(teaching[set].in, teaching[set].out, nn.evaluate(teaching[set].in));
+        console.log(teaching[set].in, teaching[set].out, nn.calculate(teaching[set].in));
       }
-           
+      
            
     }
     
@@ -40,10 +45,6 @@
 
 <body>
   
-  <table id="mainTable">
-  
-  </table>
-
 </body>
 
 </html>
