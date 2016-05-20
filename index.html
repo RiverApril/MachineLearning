@@ -1,133 +1,47 @@
 <html>
-
-<head>
-  <script type="application/javascript" src="neuralNetwork.js"></script>
-  <script type="application/javascript" src="networkVisualizer.js"></script>
-  <script type="application/javascript">
-    
-    
-    
-    window.onload = function () {
-      'use strict';
+  <head>
+    <script type="application/javascript">
       
-      var intervalID;
-
-      var teaching = [
-        {in:[0, 0, 0], out:[0, 0]},
-        {in:[0, 1, 0], out:[0, 1]},
-        {in:[1, 0, 0], out:[0, 1]},
-        {in:[1, 1, 0], out:[1, 0]},
-        {in:[0, 0, 1], out:[0, 1]},
-        {in:[0, 1, 1], out:[1, 0]},
-        {in:[1, 0, 1], out:[1, 0]},
-        {in:[1, 1, 1], out:[0, 0]},
-      ];
-      
-      var hiddenTopology = [4, 4];
-      
-      var learningRate = 0.5;
-      
-      var topology = [teaching[0].in.length].concat(hiddenTopology).concat([teaching[0].out.length]);
-      
-      run(teaching, topology, learningRate);
-      
-    }
-      
-      
-    var run = function(teaching, topology, learningRate){
-      'use strict';
-      
-      var nn = new Network(topology, teaching.length);
-      
-  
-      var canvas = document.getElementById("mainCanvas");
-      var context = canvas.getContext("2d");
-
-      context.canvas.width = window.innerWidth;
-      context.canvas.height = window.innerHeight;
-        
-      var graphX = 0;
-      var graphY = 0;
-      var graphH = 100;
-      var graphW = context.canvas.width;
-      
-      var networkVis = new NetworkVisualizer(context, nn, 100, graphH, context.canvas.width-100, context.canvas.height-graphH);
-
-      var epochs = 0;
-
-      var diffs = [];
-
-      for(var set = 0; set < teaching.length; set++){
-        diffs.push([]);
+      window.onload = function () {
+        document.getElementById("trainingData").value = 
+"[\n\
+{\"in\":[0, 0, 0], \"out\":[0, 0]},\n\
+{\"in\":[0, 1, 0], \"out\":[0, 1]},\n\
+{\"in\":[1, 0, 0], \"out\":[0, 1]},\n\
+{\"in\":[1, 1, 0], \"out\":[1, 0]},\n\
+{\"in\":[0, 0, 1], \"out\":[0, 1]},\n\
+{\"in\":[0, 1, 1], \"out\":[1, 0]},\n\
+{\"in\":[1, 0, 1], \"out\":[1, 0]},\n\
+{\"in\":[1, 1, 1], \"out\":[0, 0]}\n\
+]";
+        document.getElementById("trainingData").style.height = document.getElementById("trainingData").scrollHeight+'px';
+        document.getElementById("trainingData").style.width = document.getElementById("trainingData").scrollWidth*1.5+'px';
       }
+    
+      var engageSim = function () {
+        
+        var teaching = JSON.parse(document.getElementById("trainingData").value);
 
-      var update = function(){
-        context.fillStyle = "#FFFFFF";
-        context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+        var hiddenTopology = JSON.parse(document.getElementById("hiddenTopology").value);
+
+        var learningRate = document.getElementById("learningRate").value;
+
+        var topology = [teaching[0].in.length].concat(hiddenTopology).concat([teaching[0].out.length]);
         
-        context.strokeStyle = "#000000";
-        context.strokeText("Epoch: "+epochs, 0, networkVis.fontH);
+        var data = {teaching:teaching, topology:topology, learningRate:learningRate};
         
-        var outputs = [];
-        
-        for(var set = 0; set < teaching.length; set++){
-          outputs.push(nn.calculate(teaching[set].in));
-          nn.learn(teaching[set].out, learningRate);
-          var diff = 0;
-          for (var o = 0; o < teaching[set].out.length; o++) {
-            diff = Math.max(diff, Math.abs(nn.neurons[nn.neurons.length - 1][o].data.output-teaching[set].out[o]));
-          }
-          diffs[set].push(diff);
-        }
-        networkVis.draw();
-        epochs++;
-        
-        context.strokeStyle = "#FFC0C0";
-        context.beginPath();
-        context.moveTo(graphX, graphY);
-        context.lineTo(graphX+graphW, graphY);
-        context.moveTo(graphX, graphY+graphH);
-        context.lineTo(graphX+graphW, graphY+graphH);
-        context.stroke();
-        
-        for(var set = 0; set < teaching.length; set++){
-          context.strokeStyle = "#808080";
-          context.beginPath();
-          for (var i = 0; i < graphW; i++) {
-            var y = ((1 - diffs[set][Math.ceil(diffs[set].length / graphW * i)]) * graphH) + graphY;
-            if (i == 0) {
-              context.moveTo(graphX+i, y);
-            } else {
-              context.lineTo(graphX+i, y);
-            }
-          }
-          context.stroke();
-          context.strokeStyle = "#000000";
-          for (var i = 0; i < outputs[set].length; i++) {
-            outputs[set][i] = Number(outputs[set][i].toFixed(4));
-          }
-          var str = JSON.stringify(teaching[set].in) + " -> " + JSON.stringify(teaching[set].out) + " ~ " + JSON.stringify(outputs[set]);
-          context.strokeText(str, 0, graphY + graphH + (16*(set+2)));
-        }
-      
+        var url = "sim.html?data="+encodeURIComponent(JSON.stringify(data));
+        window.location.href = url;
       }
-      
-      intervalID = window.setInterval(update, 1);
-      
-           
-    }
     
-    var stop = function () {
-      window.clearInterval(intervalID);
-    }
+    </script>
+  </head>
+  <body>
     
-  </script>
-</head>
-
-<body>
-  
-  <canvas id="mainCanvas" width=400 height=400>Canvas not supported</canvas>
-  
-</body>
-
+    Learning Rate: <input id="learningRate" type="number" value="0.5"><br />
+    Training Data: <br /><textarea id="trainingData" style="font-family: monospace;"></textarea><br />
+    Hidden Layer Topology: <br /><input id="hiddenTopology" type="text" value="[4, 4]"><br />
+    <input type="button" value="Run" onclick="engageSim();">
+    
+  </body>
 </html>

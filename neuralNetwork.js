@@ -7,14 +7,10 @@ function assert(b){
   }
 }
 
-var Network = function (topology, trialQty) {
+var Network = function (topology, randomWeightFunc) {
   "use strict";
   
-  this.trialQty = trialQty;
-  
-  this.randomWeight = function () {
-    return (Math.random()*2.0-1.0) * (1.0 / Math.sqrt(this.trialQty));
-  }
+  this.randomWeight = randomWeightFunc;
   
   this.neurons = [];
   for(var x = 0; x < topology.length; x++){
