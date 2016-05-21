@@ -1,0 +1,103 @@
+<html>
+
+<head>
+  <script type="application/javascript" src="neuralNetwork.js"></script>
+  <script type="application/javascript" src="networkVisualizer.js"></script>
+  <script type="application/javascript">
+    
+    
+      
+    var intervalID;
+    
+    var canvas, context;
+    
+    var w;
+    var h;
+    
+    window.onload = function () {
+      'use strict';
+      
+      
+      
+      var image = document.getElementById("image");
+      
+      w = image.width;
+      h = image.height;
+      
+      canvas = document.getElementById("mainCanvas");
+      context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0);
+      var trainingImage = context.getImageData(0, 0, w, h);
+      
+      var topology = [2, 64, 4];
+      
+      var learningRate = .1;
+
+      var randomWeightFunc = function () {
+        return (Math.random()*2.0-1.0);
+      }
+      
+      run(trainingImage, topology, learningRate, randomWeightFunc);
+      
+    }
+      
+      
+    var run = function(trainingImage, topology, learningRate, randomWeightFunc){
+      'use strict';
+      
+      var nn = new Network(topology, randomWeightFunc);
+      
+      var outputImage = context.createImageData(w, h);
+      
+      var epochs = 0;
+
+      var diffs = [];
+
+      var update = function(){
+        
+        for(var pixel = 0; pixel < trainingImage.data.length; pixel+=4){
+          var p1 = nn.calculate([(pixel/4)%w/w, (pixel/4)/w/h]);
+          outputImage.data[pixel+0] = p1[0] * 256.0;
+          outputImage.data[pixel+1] = p1[1] * 256.0;
+          outputImage.data[pixel+2] = p1[2] * 256.0;
+          outputImage.data[pixel+3] = p1[3] * 256.0;
+          var p2 = [];
+          p2[0] = [trainingImage.data[pixel+0] / 256.0];
+          p2[1] = [trainingImage.data[pixel+1] / 256.0];
+          p2[2] = [trainingImage.data[pixel+2] / 256.0];
+          p2[3] = [trainingImage.data[pixel+3] / 256.0];
+          nn.learn(p2, learningRate);
+        }
+        epochs++;
+        
+        context.fillStyle = "#FFFFFF";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        
+        context.putImageData(trainingImage, 0, 0);
+        context.putImageData(outputImage, w+10, 0);
+        context.strokeText(epochs, 0, h+10);
+        
+      }
+      
+      
+      
+      intervalID = window.setInterval(update, 1);
+      
+           
+    }
+    
+    var stop = function () {
+      window.clearInterval(intervalID);
+    }
+    
+  </script>
+</head>
+
+<body>
+  
+  <img hidden="hidden" id="image" src="image.png">
+  <canvas id="mainCanvas" width=400 height=400>Canvas not supported</canvas>
+  
+</body>
+
+</html>
