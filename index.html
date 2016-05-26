@@ -2,6 +2,7 @@
   <head>
     <link rel="stylesheet" type="text/css" href="/style.css">
     <link rel="shortcut icon" type="image/png" href="/favicon.png"/>
+    <script type="application/javascript" src="nnfuncs.js"></script>
     <script type="application/javascript">
       
       window.onload = function () {
@@ -16,24 +17,67 @@
 {\"in\":[1, 0, 1], \"out\":[1, 0]},\n\
 {\"in\":[1, 1, 1], \"out\":[0, 0]}\n\
 ]";
+        document.getElementById("testingData").value = 
+"[\n\
+[0, 0, 0],\n\
+[1, 1, 1]\n\
+]";
         document.getElementById("trainingData").style.height = document.getElementById("trainingData").scrollHeight+'px';
         document.getElementById("trainingData").style.width = document.getElementById("trainingData").scrollWidth*1.5+'px';
+        document.getElementById("testingData").style.height = document.getElementById("testingData").scrollHeight+'px';
+        document.getElementById("testingData").style.width = document.getElementById("testingData").scrollWidth*1.5+'px';
+        
+        {
+          var select = document.getElementById("selectInitalWeights");
+          for(var funcName in InitalWeightFunctions){
+            var option = document.createElement("option");
+            option.value = funcName;
+            option.innerHTML = funcName;
+            select.appendChild(option);
+          }
+        }
+        {
+          var select = document.getElementById("selectActivation");
+          for(var funcName in ActivationFunctions){
+            var option = document.createElement("option");
+            option.value = funcName;
+            option.innerHTML = funcName;
+            select.appendChild(option);
+          }
+        }
       }
     
       var engageSim = function () {
         
-        var teaching = JSON.parse(document.getElementById("trainingData").value);
+        try{
+          var teaching = JSON.parse(document.getElementById("trainingData").value);
+          var testing = JSON.parse(document.getElementById("testingData").value);
 
-        var hiddenTopology = JSON.parse(document.getElementById("hiddenTopology").value);
+          var hiddenTopology = JSON.parse(document.getElementById("hiddenTopology").value);
 
-        var learningRate = document.getElementById("learningRate").value;
+          var learningRate = document.getElementById("learningRate").value;
 
-        var topology = [teaching[0].in.length].concat(hiddenTopology).concat([teaching[0].out.length]);
+          var topology = [teaching[0].in.length].concat(hiddenTopology).concat([teaching[0].out.length]);
+
+          var initalWeightFunc = document.getElementById("selectInitalWeights").value;
+          var activationFunc = document.getElementById("selectActivation").value;
+
+          var data = {teaching:teaching, testing:testing, topology:topology, learningRate:learningRate, initalWeightFunc:initalWeightFunc, activationFunc:activationFunc};
+
+          var url = "sim.html?data="+encodeURIComponent(JSON.stringify(data));
+
+          var win = window.open(url, '_blank');
+          if(win){
+              win.focus();
+          }else{
+            window.location.href = url;
+          }
+          
+        }catch(Exception){
+          alert(Exception);
+        }
+
         
-        var data = {teaching:teaching, topology:topology, learningRate:learningRate};
-        
-        var url = "sim.html?data="+encodeURIComponent(JSON.stringify(data));
-        window.location.href = url;
       }
     
     </script>
@@ -42,7 +86,10 @@
     
     Learning Rate: <input id="learningRate" type="number" value="0.5"><br />
     Training Data: <br /><textarea id="trainingData" style="font-family: monospace;"></textarea><br />
+    Testing Data: <br /><textarea id="testingData" style="font-family: monospace;"></textarea><br />
     Hidden Layer Topology: <br /><input id="hiddenTopology" type="text" value="[4, 4]"><br />
+    Inital Weights: <select id="selectInitalWeights"></select><br />
+    Activation Function: <select id="selectActivation"></select><br />
     <input type="button" value="Run" onclick="engageSim();">
     
   </body>

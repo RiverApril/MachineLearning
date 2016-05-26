@@ -7,7 +7,7 @@ function assert(b){
   }
 }
 
-var Network = function (topology, randomWeightFunc) {
+var Network = function (topology, randomWeightFunc, activationFunc, activationDerivFunc) {
   "use strict";
   
   this.randomWeight = randomWeightFunc;
@@ -48,13 +48,9 @@ var Network = function (topology, randomWeightFunc) {
     }
   }
   
-  this.activation = function (x) {
-    return 1.0 / (1.0 + Math.exp(-x))
-  }
+  this.activation = activationFunc;
   
-  this.activationDeriv = function (x) {
-    return this.activation(x) * (1.0 - this.activation(x));
-  }
+  this.activationDeriv = activationDerivFunc;
   
 }
 
@@ -96,7 +92,7 @@ var Neuron = function (network, x, y) {
   
   this.calculateError = function (target) {
     if(this.x === network.neurons.length - 1){
-      this.data.error = this.network.activationDeriv(this.data.net) * (target  - this.data.output);
+      this.data.error = this.network.activationDeriv(this.data.net) * (target - this.data.output);
     } else if (this.x > 0){
       assert(target === undefined)
       var sum = 0;

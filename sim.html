@@ -1,34 +1,34 @@
 <html>
 
 <head>
+  <title>BackProp NeuralNet</title>
   <script type="application/javascript" src="neuralNetwork.js"></script>
   <script type="application/javascript" src="networkVisualizer.js"></script>
+  <script type="application/javascript" src="nnfuncs.js"></script>
   <script type="application/javascript">
     
     
       
     var intervalID;
     
+    var data;
+    
     window.onload = function () {
       'use strict';
 
       var url = window.location.href;
       var str = url.substr(url.indexOf("?data=")+6);
-      var data = JSON.parse(decodeURIComponent(str));
+      data = JSON.parse(decodeURIComponent(str));
 
-      var randomWeightFunc = function () {
-        return (Math.random()*2.0-1.0) * (1.0 / Math.sqrt(data.teaching.length));
-      }
-      
-      run(data.teaching, data.topology, data.learningRate, randomWeightFunc);
+      run(data.teaching, data.topology, data.learningRate, InitalWeightFunctions[data.initalWeightFunc], ActivationFunctions[data.activationFunc], ActivationDerivFunctions[data.activationFunc], data.testing);
       
     }
       
       
-    var run = function(teaching, topology, learningRate, randomWeightFunc){
+    var run = function(teaching, topology, learningRate, randomWeightFunc, activationFunc, activationDerivFunc, testing){
       'use strict';
       
-      var nn = new Network(topology, randomWeightFunc);
+      var nn = new Network(topology, randomWeightFunc, activationFunc, activationDerivFunc);
       
   
       var canvas = document.getElementById("mainCanvas");
@@ -46,11 +46,19 @@
 
       var epochs = 0;
 
-      var diffs = [];
+      var errs = [];
 
       for(var set = 0; set < teaching.length; set++){
-        diffs.push([]);
+        errs.push([]);
       }
+      
+      var high = 0;
+      for(var set = 0; set < teaching.length; set++){
+          for (var o = 0; o < teaching[set].out.length; o++) {
+            high = Math.max(high, Math.abs(teaching[set].out[o]));
+          }
+      }
+      high *= 4;
 
       var update = function(){
         context.fillStyle = "#FFFFFF";
@@ -64,11 +72,14 @@
         for(var set = 0; set < teaching.length; set++){
           outputs.push(nn.calculate(teaching[set].in));
           nn.learn(teaching[set].out, learningRate);
-          var diff = 0;
+          var err = 0;
           for (var o = 0; o < teaching[set].out.length; o++) {
-            diff = Math.max(diff, Math.abs(nn.neurons[nn.neurons.length - 1][o].data.output-teaching[set].out[o]));
+            var x = Math.abs((teaching[set].out[o] - outputs[outputs.length-1][o])) * high;
+            x = (x / (x+1));
+            err += x;
           }
-          diffs[set].push(diff);
+          err /= teaching[set].out.length;
+          errs[set].push(err);
         }
         networkVis.draw();
         epochs++;
@@ -85,7 +96,7 @@
           context.strokeStyle = "#808080";
           context.beginPath();
           for (var i = 0; i < graphW; i++) {
-            var y = ((1 - diffs[set][Math.ceil(diffs[set].length / graphW * i)]) * graphH) + graphY;
+            var y = ((1 - errs[set][Math.ceil(errs[set].length / graphW * i)]) * graphH) + graphY;
             if (i == 0) {
               context.moveTo(graphX+i, y);
             } else {
@@ -99,6 +110,15 @@
           }
           var str = JSON.stringify(teaching[set].in) + " -> " + JSON.stringify(teaching[set].out) + " ~ " + JSON.stringify(outputs[set]);
           context.strokeText(str, 0, graphY + graphH + (16*(set+2)));
+        }
+        
+        for(var set = 0; set < testing.length; set++){
+          var testingOutput = nn.calculate(testing[set]);
+          for (var i = 0; i < testingOutput.length; i++) {
+            testingOutput[i] = Number(testingOutput[i].toFixed(4));
+          }
+          var str = JSON.stringify(testing[set]) + " ~> " + JSON.stringify(testingOutput);
+          context.strokeText(str, 0, graphY + graphH + (16*(set+3+teaching.length)));
         }
       
       }
