@@ -3,9 +3,27 @@
 <head>
   <script type="application/javascript" src="neuralNetwork.js"></script>
   <script type="application/javascript" src="networkVisualizer.js"></script>
+  <script type="application/javascript" src="nnfuncs.js"></script>
   <script type="application/javascript">
     
-    
+    function loadImageFile(){
+      var image = document.getElementById("image");
+      var fileElement = document.getElementById("fileImput");
+      var file = fileElement.files[0];
+      var reader = new FileReader();
+
+      reader.onloadend = function () {
+        image.src = reader.result;
+        fileElement.style.display = 'none';
+        start();
+      }
+
+      if (file) {
+        reader.readAsDataURL(file);
+      } else {
+        image.src = "";
+      }
+    }
       
     var intervalID;
     
@@ -14,10 +32,8 @@
     var w;
     var h;
     
-    window.onload = function () {
+    function start() {
       'use strict';
-      
-      
       
       var image = document.getElementById("image");
       
@@ -45,7 +61,7 @@
     var run = function(trainingImage, topology, learningRate, randomWeightFunc){
       'use strict';
       
-      var nn = new Network(topology, randomWeightFunc);
+      var nn = new Network(topology, randomWeightFunc, ActivationFunctions["Sigmoid (0 to 1)"], ActivationDerivFunctions["Sigmoid (0 to 1)"]);
       
       var outputImage = context.createImageData(w, h);
       
@@ -79,11 +95,8 @@
         
       }
       
-      
-      
       intervalID = window.setInterval(update, 1);
       
-           
     }
     
     var stop = function () {
@@ -95,7 +108,9 @@
 
 <body>
   
-  <img hidden="hidden" id="image" src="image.png">
+  <p>Upload an image to teach the network to draw</p>
+  <input id="fileImput" type="file" onchange="loadImageFile()">
+  <img hidden="hidden" id="image" src="">
   <canvas id="mainCanvas" width=400 height=400>Canvas not supported</canvas>
   
 </body>
