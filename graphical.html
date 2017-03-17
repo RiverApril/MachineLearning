@@ -42,12 +42,14 @@
       
       canvas = document.getElementById("mainCanvas");
       context = canvas.getContext('2d');
+      context.canvas.width = w*2+10;
+      context.canvas.height = h+12;
       context.drawImage(image, 0, 0);
       var trainingImage = context.getImageData(0, 0, w, h);
       
-      var topology = [2, 64, 4];
+      var topology = [2, 10, 4];
       
-      var learningRate = .1;
+      var learningRate = .5;
 
       var randomWeightFunc = function () {
         return (Math.random()*2.0-1.0);
@@ -109,7 +111,7 @@
 <body>
   
   <p>Upload an image to teach the network to draw</p>
-  <input id="fileImput" type="file" onchange="loadImageFile()">
+  <input id="fileImput" type="file" onchange="loadImageFile()" accept=".jpeg,.png">
   <img hidden="hidden" id="image" src="">
   <canvas id="mainCanvas" width=400 height=400>Canvas not supported</canvas>
   
